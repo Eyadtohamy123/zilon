@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Scraper 3.0 — Enterprise Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🕸️</div>
+    <div>
+      <div class="brand-title">Web Scraper</div>
+      <div class="brand-version">v3.0 Enterprise</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-tab="scraper" onclick="showTab('scraper', this)">
+      <span class="nav-icon">⚡</span> New Job
+    </button>
+    <button class="nav-item" data-tab="history" onclick="showTab('history', this)">
+      <span class="nav-icon">📂</span> Run History
+    </button>
+    <button class="nav-item" data-tab="about" onclick="showTab('about', this)">
+      <span class="nav-icon">ℹ️</span> About
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="status-badge" id="connection-badge">
+      <span class="status-dot"></span> Connected
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main">
+
+  <!-- ── Top Bar ── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="page-title" id="page-title">New Scraping Job</h1>
+      <div class="page-sub">Configure and launch your extraction</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-danger hidden" id="stop-btn" onclick="stopJob()">⛔ Stop Job</button>
+      <button class="btn btn-primary" id="launch-btn" onclick="launchJob()">
+        <span>🚀</span> Launch Scraper
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════ TAB: SCRAPER ══════════════════ -->
+  <div class="tab-content active" id="tab-scraper">
+    <div class="two-col">
+
+      <!-- LEFT: Config Panel -->
+      <div class="config-panel">
+
+        <!-- Card: Target -->
+        <div class="card" id="card-target">
+          <div class="card-header">
+            <span class="card-icon">🔗</span>
+            <div>
+              <div class="card-title">Target URL</div>
+              <div class="card-sub">Enter the website you want to scrape</div>
+            </div>
+          </div>
+          <input type="url" class="input-field" id="url-input" placeholder="https://example.com" />
+        </div>
+
+        <!-- Card: Engine -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">⚙️</span>
+            <div>
+              <div class="card-title">Scraping Engine</div>
+              <div class="card-sub">Choose your extraction method</div>
+            </div>
+          </div>
+          <div class="engine-selector">
+            <div class="engine-option selected" id="engine-fast" onclick="selectEngine('fast')">
+              <div class="engine-badge">⚡ FAST</div>
+              <div class="engine-name">HTTPX Engine</div>
+              <div class="engine-desc">Best for standard HTML sites. Extremely fast.</div>
+            </div>
+            <div class="engine-option" id="engine-browser" onclick="selectEngine('browser')">
+              <div class="engine-badge">🌐 JS</div>
+              <div class="engine-name">Browser Engine</div>
+              <div class="engine-desc">Playwright headless Chrome. Handles React/Vue/Angular.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Crawl Settings -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">📄</span>
+            <div>
+              <div class="card-title">Crawl Settings</div>
+              <div class="card-sub">Define the scope of your crawl</div>
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="input-group">
+              <label class="input-label">Max Pages</label>
+              <input type="number" class="input-field" id="max-pages" value="50" min="1" max="1000" />
+            </div>
+            <div class="input-group">
+              <label class="input-label">Max Depth</label>
+              <input type="number" class="input-field" id="max-depth" value="3" min="1" max="10" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: What to Extract -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">🎯</span>
+            <div>
+              <div class="card-title">Data to Extract</div>
+              <div class="card-sub">Select what to pull from each page</div>
+            </div>
+          </div>
+          <div class="checkbox-grid">
+            <label class="checkbox-item checked" data-value="metadata">
+              <input type="checkbox" checked hidden /> 
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">📋 Metadata & SEO</span>
+            </label>
+            <label class="checkbox-item checked" data-value="text">
+              <input type="checkbox" checked hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">📝 Page Text</span>
+            </label>
+            <label class="checkbox-item checked" data-value="ecommerce">
+              <input type="checkbox" checked hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">🛒 E-Commerce Products</span>
+            </label>
+            <label class="checkbox-item" data-value="ai_insights">
+              <input type="checkbox" hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">🤖 AI Insights (Local)</span>
+            </label>
+            <label class="checkbox-item checked" data-value="headings">
+              <input type="checkbox" checked hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">🔤 Headings H1-H6</span>
+            </label>
+            <label class="checkbox-item checked" data-value="images">
+              <input type="checkbox" checked hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">🖼️ Images & Media</span>
+            </label>
+            <label class="checkbox-item checked" data-value="links">
+              <input type="checkbox" checked hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">🔗 Links</span>
+            </label>
+            <label class="checkbox-item" data-value="tables">
+              <input type="checkbox" hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">📊 Tables</span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <label class="toggle-item">
+              <div class="toggle-label">
+                <span>📧 Extract Emails & Phones</span>
+                <span class="toggle-sub">Scan all text for contact info</span>
+              </div>
+              <div class="toggle-switch" id="toggle-patterns" onclick="toggleSwitch(this)"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Card: Export -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">💾</span>
+            <div>
+              <div class="card-title">Export Formats</div>
+              <div class="card-sub">Choose how to deliver the data</div>
+            </div>
+          </div>
+          <div class="checkbox-grid">
+            <label class="checkbox-item checked" data-value="csv">
+              <input type="checkbox" checked hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">📄 CSV</span>
+            </label>
+            <label class="checkbox-item checked" data-value="excel">
+              <input type="checkbox" checked hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">📊 Excel</span>
+            </label>
+            <label class="checkbox-item" data-value="json">
+              <input type="checkbox" hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">🔵 JSON</span>
+            </label>
+            <label class="checkbox-item" data-value="jsonl">
+              <input type="checkbox" hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">📦 JSONL (Big Data)</span>
+            </label>
+            <label class="checkbox-item" data-value="sqlite">
+              <input type="checkbox" hidden />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">🗄️ SQLite DB</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Card: Advanced -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">🔬</span>
+            <div>
+              <div class="card-title">Advanced Options</div>
+              <div class="card-sub">Fine-tune your extraction</div>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <label class="toggle-item">
+              <div class="toggle-label">
+                <span>📄 Save Raw HTML</span>
+                <span class="toggle-sub">Dump page source to HTML_DUMPS/</span>
+              </div>
+              <div class="toggle-switch" id="toggle-html" onclick="toggleSwitch(this)"></div>
+            </label>
+            <label class="toggle-item">
+              <div class="toggle-label">
+                <span>🖼️ Download Images</span>
+                <span class="toggle-sub">Save physical image files to IMAGES/</span>
+              </div>
+              <div class="toggle-switch" id="toggle-images" onclick="toggleSwitch(this)"></div>
+            </label>
+          </div>
+          <div class="input-group" style="margin-top:1rem">
+            <label class="input-label">🛡️ Proxy URL (optional)</label>
+            <input type="text" class="input-field" id="proxy-input" placeholder="http://user:pass@proxy.com:8080" />
+          </div>
+
+          <!-- Custom CSS Selectors -->
+          <div class="selector-section">
+            <div class="selector-header">
+              <span>🎯 Custom CSS Selectors</span>
+              <button class="btn-add" onclick="addSelector()">+ Add</button>
+            </div>
+            <div id="selectors-list"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Live Output Panel -->
+      <div class="output-panel">
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-value" id="stat-pages">0</div>
+            <div class="stat-label">Pages Scraped</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-records">0</div>
+            <div class="stat-label">Records Found</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-files">0</div>
+            <div class="stat-label">Files Exported</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-status">Idle</div>
+            <div class="stat-label">Status</div>
+          </div>
+        </div>
+
+        <!-- Live Log -->
+        <div class="log-panel">
+          <div class="log-header">
+            <span>📜 Live Console</span>
+            <button class="btn-clear" onclick="clearLog()">Clear</button>
+          </div>
+          <div class="log-body" id="log-body">
+            <div class="log-entry log-info">🕸️  Web Scraper 3.0 — Enterprise Edition ready. Configure your job and click Launch.</div>
+          </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel hidden" id="results-panel">
+          <div class="results-header">✅ Job Complete — Exported Files</div>
+          <div class="results-grid" id="results-grid"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ TAB: HISTORY ══════════════════ -->
+  <div class="tab-content" id="tab-history">
+    <div class="card" style="max-width:100%">
+      <div class="card-header">
+        <span class="card-icon">📂</span>
+        <div>
+          <div class="card-title">Previous Runs</div>
+          <div class="card-sub">Click a run to view its exported files</div>
+        </div>
+        <button class="btn btn-secondary" onclick="loadHistory()" style="margin-left:auto">🔄 Refresh</button>
+      </div>
+      <div id="history-list"><div class="empty-state">Loading history...</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ TAB: ABOUT ══════════════════ -->
+  <div class="tab-content" id="tab-about">
+    <div class="about-grid">
+      <div class="card about-card">
+        <div class="about-icon">⚡</div>
+        <div class="about-name">Fast Engine</div>
+        <div class="about-desc">HTTPX-powered async engine. Scrapes thousands of pages per minute using connection pooling and anti-ban jitter.</div>
+      </div>
+      <div class="card about-card">
+        <div class="about-icon">🌐</div>
+        <div class="about-name">Browser Engine</div>
+        <div class="about-desc">Playwright headless Chromium. Renders JavaScript, scrolls, and bypasses basic bot protections automatically.</div>
+      </div>
+      <div class="card about-card">
+        <div class="about-icon">🧹</div>
+        <div class="about-name">Auto-Cleaner</div>
+        <div class="about-desc">All extracted text is automatically sanitized — HTML entities decoded, dates normalized, corrupted bytes removed.</div>
+      </div>
+      <div class="card about-card">
+        <div class="about-icon">📦</div>
+        <div class="about-name">Big Data Export</div>
+        <div class="about-desc">Export to CSV, Excel, JSONL, and SQLite. Handles millions of records without crashing RAM.</div>
+      </div>
+      <div class="card about-card">
+        <div class="about-icon">🔄</div>
+        <div class="about-name">Crash Recovery</div>
+        <div class="about-desc">State is auto-saved. If your connection drops during a 100,000-page job, you can resume exactly where you left off.</div>
+      </div>
+      <div class="card about-card">
+        <div class="about-icon">📖</div>
+        <div class="about-name">Data Dictionary</div>
+        <div class="about-desc">Every run auto-generates a DATA_DICTIONARY.md schema file and a professional SCRAPING_REPORT.txt for clients.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1.5rem; text-align:center; color:var(--text-muted)">
+      <p style="font-size:1.1rem; font-weight:600; color:var(--text)">Web Scraper 3.0 — Enterprise Edition</p>
+      <p>Built with Python · HTTPX · Playwright · Flask · pandas · selectolax</p>
+    </div>
+  </div>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

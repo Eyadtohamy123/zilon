@@ -1,0 +1,19 @@
+==================================================
+  WEB SCRAPER 3.0 - RUN REPORT
+==================================================
+
+Target Site: test_site
+Run Date: 2026-09-27 16:01:28
+
+--- CRAWL STATS ---
+Pages Scraped: 2
+Successful Requests: 2
+Errors Encountered: 0
+
+--- DATA EXTRACTED ---
+- Metadata: 2 records
+- Full_text: 2 records
+- Links: 188 records
+- Crawl_log: 2 records
+
+==================================================
